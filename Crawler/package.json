@@ -1,0 +1,16 @@
+{
+  "name": "Crawler",
+  "scripts": {
+    "test": "Test script"
+  },
+  "dependencies": {
+    "async": "^2.1.2",
+    "cheerio": "^1.0.0-rc.2",
+    "colors": "^1.1.2",
+    "commander": "^2.11.0",
+    "rabbit.js": "^0.4.4",
+    "redis": "^2.6.3",
+    "request": "^2.81.0",
+    "semaphore": "^1.0.5"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "SiteManager",
+  "main": "cluster.js",
+  "scripts": {
+    "start": "node cluster.js"
+  },
+  "dependencies": {
+    "async": "^2.1.2",
+    "body-parser": "^1.15.2",
+    "busboy": "^0.2.13",
+    "cluster": "^0.7.7",
+    "colors": "^1.1.2",
+    "compression": "^1.6.2",
+    "cron": "^1.2.1",
+    "ect": "^0.5.9",
+    "errorhandler": "^1.4.3",
+    "express": "^4.14.0",
+    "googleapis": "^14.2.0",
+    "jade": "^1.11.0",
+    "kafka-node": "^1.0.5",
+    "mongoose": "^4.11.8",
+    "rabbit.js": "^0.4.4",
+    "redis": "^2.6.3",
+    "request": "^2.78.0",
+    "response-time": "^2.3.1",
+    "semaphore": "^1.0.5",
+    "srt-to-vtt": "^1.1.1",
+    "underscore": "^1.8.3"
+  }
+}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Bootstrap Example</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		var processAddSite = false
+		var processEditPattern = false
+		var processProcessorData = false
+
+		function addSite(){
+			if (processAddSite) return
+			processAddSite = true
+			
+			document.getElementById("addSiteButton").disabled=true
+
+			var form = document.querySelector("#add-site-form")
+			if (!form) return alert("cannot find add form")
+
+			var name = form.querySelector('input[name="name"]').value
+			var root_url = form.querySelector('input[name="root_url"]').value
+			console.log("add " + name + " - "	+ root_url)
+
+			sendAjax("/site/add", "name="+name+"&root_url="+root_url, function(){
+				window.location.href = location.href
+			})
+		}
+
+		function removeSite(id){
+			sendAjax("/site/remove", "id="+id, function(){
+				location.reload();
+			})
+		}
+
+		function release(){
+			document.getElementById("addSiteButton").disabled=false
+			document.getElementById("editSeedButton").disabled=false
+			document.getElementById("editProcessorButton").disabled=false
+			processAddSite = false
+			processEditPattern = false
+			processProcessorData = false
+			// document.querySelector("[data-dismiss=modal]").click()
+		}
+
+		function sendAjax(url, data, callback){
+			var xhttp = new XMLHttpRequest();
+
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+					console.log(xhttp.responseText)
+					callback()
+				} else if (this.readyState == 4){
+					alert(xhttp.responseText)
+					release()
+				}
+			};
+			xhttp.open("POST", url, true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhttp.send(data);
+		}
+
+
+		function initSeedData(siteID, data){
+			document.querySelector("#configSeedModal #seedPatternData").value=data.split(",").join("\n")
+			document.querySelector("#configSeedModal #siteID").value=siteID
+		}
+
+		function initProcessorData(siteID, data){
+			document.querySelector("#configProcessorModal #processorConfigData").value=JSON.stringify(data, false, 4)
+			document.querySelector("#configProcessorModal #siteID").value=siteID
+		}
+
+		function editSeedPattern(){
+			if (processEditPattern) return
+			processEditPattern = true
+			
+			document.getElementById("editSeedButton").disabled=true
+
+			var data = document.querySelector("#configSeedModal #seedPatternData").value
+			var siteID = document.querySelector("#configSeedModal #siteID").value
+
+			sendAjax("/site/edit", "id="+siteID+"&seed_url_pattern="+data, function(){
+				location.reload();
+			})
+		}
+
+		function editProcessorData(){
+			if (processProcessorData) return
+			processProcessorData = true
+			
+			document.getElementById("editProcessorButton").disabled=true
+
+			var data = document.querySelector("#configProcessorModal #processorConfigData").value
+			var siteID = document.querySelector("#configProcessorModal #siteID").value
+
+			sendAjax("/site/edit", "id="+siteID+"&article_processor="+data, function(){
+				location.reload();
+			})
+		}
+	</script>
+</head>
+<body>
+
+<div class="container">
+	<h2>Sites</h2>
+	<p>Show all site information and status</p>	
+	<button type="button" class="btn btn-info btn-md" data-keyboard="true" data-toggle="modal" data-target="#addSiteModal">Add Site</button>	
+
+	<!-- Modal -->
+	<div class="modal fade" id="addSiteModal" role="dialog">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Add a new site</h4>
+				</div>
+				<div class="modal-body">
+					<form action="#" id="add-site-form" onsubmit="addSite(); return false" >
+						<div class="form-group">
+							<label for="name">Name:</label>
+							<input class="form-control" placeholder="Enter site name" name="name">
+						</div>
+						<div class="form-group">
+							<label for="pwd">Root URL:</label>
+							<input class="form-control" placeholder="Enter site root url" name="root_url">
+						</div>
+						<input style="display:none" type="submit" value="Submit" >
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button id="addSiteButton" type="button" class="btn btn-default btn-info" onclick="addSite()" >Add</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+
+				</div>
+			</div>
+			
+		</div>
+	</div>
+
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Root URL</th>
+				<th>Seed URLs</th>
+				<th>Article URLs</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<% for site in @siteList: %>
+				<tr>
+					<td><%= site.name %></td>
+					<td><%= site.root_url %></td>
+					<td>0</td>
+					<td>0</td>
+					<td>
+						<div class="dropdown">
+							 <button class="btn btn-primary dropdown-toggle btn-xs" type="button" data-toggle="dropdown">Config <span class="caret"></span></button>
+							<ul class="dropdown-menu">
+								<li><a href="#" onclick='initSeedData("<%= site._id %>", "<%= site.seed_url_pattern %>")' data-keyboard="true" data-toggle="modal" data-target="#configSeedModal" >Seed Pattern</a></li>
+								<li><a href="#" onclick='initProcessorData("<%= site._id %>", <%- site.article_processor %>)' data-keyboard="true" data-toggle="modal" data-target="#configProcessorModal">Processor</a></li>
+							</ul>
+							<button class="btn btn-danger btn-xs" onclick='removeSite("<%= site._id %>")'>Del</button>
+						</div>
+						
+					</td>
+				</tr>
+			<% end %>
+		</tbody>
+	</table>
+
+
+	<!-- Modal -->
+	<div class="modal fade" id="configSeedModal" role="dialog">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Enter list of seed pattern</h4>
+				</div>
+				<div class="modal-body">
+					<textarea id="seedPatternData" style="margin: 0px;width: 100%; height: 100px;">
+					</textarea>
+					<input type="hidden" value="" id="siteID" />
+				</div>
+				<div class="modal-footer">
+					<button id="editSeedButton" type="button" class="btn btn-default btn-info" onclick="editSeedPattern()" >Submit</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+
+				</div>
+			</div>
+			
+		</div>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal fade" id="configProcessorModal" role="dialog">
+		<div class="modal-dialog">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Enter processor config</h4>
+				</div>
+				<div class="modal-body">
+					<textarea id="processorConfigData" style="margin: 0px;width: 100%; height: 100px;">
+					</textarea>
+					<input type="hidden" value="" id="siteID" />
+				</div>
+				<div class="modal-footer">
+					<button id="editProcessorButton" type="button" class="btn btn-default btn-info" onclick="editProcessorData()" >Submit</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+
+				</div>
+			</div>
+			
+		</div>
+	</div>
+
+</div>
+
+</body>
+</html>
