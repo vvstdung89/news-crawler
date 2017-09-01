@@ -2,18 +2,21 @@ var mongoose     = require('mongoose');
 var Schema       = mongoose.Schema;
 
 var UrlList   = new Schema({
-	domain: String,
+	domain: {type: String, index: true},
 	url: {type: String, unique: true},
 	type: String, //seed, article	
-	seedWaitTime: Number,
+	priority: String,
 	createAt: Date,
 	lastUpdateAt: Date,
+
+	isEnable: {type: Boolean, index: true}, 
 
 	processSeed: {
 		processAt: Date,
 		status: String,
 		msg: String,
 	},
+	
 	processArticle: {
 		processAt: Date,
 		status: String,
@@ -24,7 +27,7 @@ var UrlList   = new Schema({
 UrlList.set('autoIndex', true);
 UrlList.index({domain: -1, type: 1, createAt: 1})
 UrlList.index({type: -1, createAt: 1})
-UrlList.index({domain: -1, type: 1, processSeed: -1, createAt: 1})
+UrlList.index({domain: -1, type: 1, priority: 1, processSeed: -1, createAt: 1})
 UrlList.index({domain: -1, type: 1, processArticle: -1, createAt: 1})
 
 var DBModel = mongoose.model('url', UrlList);

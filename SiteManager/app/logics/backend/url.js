@@ -1,9 +1,12 @@
 var UrlDB = require("../../models/Url").DBModel
+var SiteDB = require("../../models/Site").DBModel
 var MsgQueue = require("../libs/MsgQueue")
 var async = require("async")
 
 _5min = 5*60*1000
 _15min = 15*60*1000
+_30min = 30*60*1000
+_60min = 60*60*1000
 
 module.exports = {
 	getSeedURLToCrawl: function(req, res){
@@ -11,6 +14,7 @@ module.exports = {
 
 		var query = {
 			type: "seed", 
+			isEnable: true,
 			$or: [
 				{
 					"processSeed": {$exists: false}
@@ -22,6 +26,21 @@ module.exports = {
 				{
 					"processSeed.status" : "error",
 					"processSeed.processAt": {$lt: new Date() - _15min}
+				},
+				{
+					"processSeed.status" : "finish",
+					"processSeed.processAt": {$lt: new Date() - _5min},
+					"priority" : "high"
+				},
+				{
+					"processSeed.status" : "finish",
+					"processSeed.processAt": {$lt: new Date() - _30min},
+					"priority" : "medium"
+				},
+				{
+					"processSeed.status" : "finish",
+					"processSeed.processAt": {$lt: new Date() - _60min},
+					"priority" : "low"
 				}
 			]
 		}
@@ -37,9 +56,16 @@ module.exports = {
 			}
 		}
 
-		console.log(query, update)
-		UrlDB.findOneAndUpdate(query, update, {sort: {"processSeed.processAt": 1}},  function(err, obj){			
-			replyMessage(err, obj, res)
+
+		UrlDB.findOneAndUpdate(query, update, {sort: {"processSeed.processAt": 1}}).lean().exec(function(err, obj){			
+			if (obj){
+				var domain = obj.domain
+				SiteDB.findOne({domain:domain}, function(err, data){
+					obj.site = data
+					replyMessage(err, obj, res)
+				})
+			}  else replyMessage(err, obj, res)
+			
 		})
 	},
 
@@ -48,6 +74,7 @@ module.exports = {
 
 		var query = {
 			type: "article",
+			isEnable: true,
 			$or: [
 				{
 					"processArticle": {$exists: false}
@@ -75,9 +102,15 @@ module.exports = {
 		}
 
 
-		console.log(query)
-		UrlDB.findOneAndUpdate(query, update,{sort: {"createAt": 1}}, function(err, obj){			
-			replyMessage(err, obj, res)
+		
+		UrlDB.findOneAndUpdate(query, update,{sort: {"createAt": 1}}).lean().exec(function(err, obj){			
+			if (obj){
+				var domain = obj.domain
+				SiteDB.findOne({domain:domain}, function(err, data){
+					obj.site = data
+					replyMessage(err, obj, res)
+				})
+			}  else replyMessage(err, obj, res)
 		})
 	}
 }
@@ -115,7 +148,7 @@ MsgQueue.createWORKER("URLUpdate",5, function(worker, message){
 				createAt: curDate
 			}
 
-			UrlDB.findOneAndUpdate(query, url, {upsert:true },function(err, data){			
+			UrlDB.findOneAndUpdate(query, url, {upsert:true},function(err, data){			
 				callback()
 			})
 		})
@@ -129,7 +162,7 @@ MsgQueue.createWORKER("URLUpdate",5, function(worker, message){
 			createAt: curDate
 		}
 
-		UrlDB.findOneAndUpdate(query, data, function(){
+		UrlDB.findOneAndUpdate(query, data, {upsert:true}, function(){
 
 		})
 	}

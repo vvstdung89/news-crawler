@@ -7,17 +7,10 @@ var SiteConfig   = new Schema({
 	root_url: String,
 
 	priority: String, //slow, medium, high
-	seed_url_pattern : Schema.Types.Mixed, //array of regex pattern
-
-	article_processor: {
-		url_pattern: String,
-		title: String,
-		image: String,
-		content: String,
-		created_time: Schema.Types.Mixed,
-	},
-	process_seed_status: String,
-	process_article_status: String,
+	article_pattern : Schema.Types.Mixed, 
+	use_diffbot: Boolean,
+	isEnable: {type: Boolean, index: true, default: false}, 
+	article_processor: Schema.Types.Mixed,
 });
 
 SiteConfig.set('autoIndex', true);
