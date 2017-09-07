@@ -132,6 +132,7 @@ function start(){
 			if (!satisfyRequireField) {
 				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=article,domain=' + site.domain + ' value=1 \`date +%s\`000000000"'
 					exec(cmd, function(){})
+				
 				return callback(ERROR.PARSE_FAIL)
 			}
 

@@ -14,6 +14,8 @@ exports = module.exports = function (app, router){
 
 	router.post("/site/import", require("./app/logics/site").importFile)
 
+	router.get("/site/:siteID/article", require("./app/logics/analyze_article"))
+
 
 	router.post("/url/getSeedURLToCrawl", require("./app/logics/backend/url").getSeedURLToCrawl)
 	router.post("/url/getArticleURLToCrawl", require("./app/logics/backend/url").getArticleURLToCrawl)

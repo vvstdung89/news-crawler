@@ -8,8 +8,8 @@ var Config = {
 	PORT: PORT,
 	NODE_ENV: NODE_ENV,
 	REDIS: "",
-	MONGO: "mongodb://localhost:27017/News",
-	RABBITMQ: "amqp://admin:admin@localhost:15672"
+	MONGO: "mongodb://172.245.13.202:27017/News",
+	RABBITMQ: "amqp://admin:admin@172.245.13.202:15672"
 }
 
 Object.defineProperty(global, '__Config', {
