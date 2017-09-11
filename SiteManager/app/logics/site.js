@@ -125,11 +125,7 @@ function pause(req, res){
 			SiteDB.DBModel.findOne({_id:id})
 			.exec(callback)
 		},
-		updateUrl: ["getSite", function(results, callback){
-			var site = results.getSite
-			UrlDB.DBModel.update({domain: site.domain}, {isEnable: false}, {multi:true}, callback)
-		}],
-		updateSite: ["updateUrl", function(results, callback){
+		updateSite: ["getSite", function(results, callback){
 			SiteDB.DBModel.update({_id:id}, {isEnable: false}, callback)
 		}],
 	}, function(err){
@@ -153,11 +149,7 @@ function start(req, res){
 			SiteDB.DBModel.findOne({_id:id})
 			.exec(callback)
 		},
-		updateUrl: ["getSite", function(results, callback){
-			var site = results.getSite
-			UrlDB.DBModel.update({domain: site.domain}, {isEnable: true}, {multi:true}, callback)
-		}],
-		updateSite: ["updateUrl", function(results, callback){
+		updateSite: ["getSite", function(results, callback){
 			SiteDB.DBModel.update({_id:id}, {isEnable: true}, callback)
 		}],
 	}, function(err){

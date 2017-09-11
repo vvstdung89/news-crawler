@@ -56,17 +56,14 @@ function start(){
 					return callback(ERROR.NO_VALID_SEED_URL)
 				}
 
-				var seedWaitTime = replyObj.data.seedWaitTime
-				var processSeedTime = replyObj.data.processSeed ? replyObj.data.processSeed.processAt : "" 
-				
-				if (processSeedTime && (new Date() - new Date(processSeedTime) < seedWaitTime*1000 ) ) {
-					return callback(ERROR.SEED_WAITTIME_ERROR, replyObj.data)
-				}
-
 				callback(null, replyObj.data)
 			})
 		},
-		downloadSeed: ["getSeedUrl", function(results, callback){
+		processSeed: ["getSeedUrl", function(results, callback){
+			var seedUrls = results.getSeedUrl
+			
+		}],
+		downloadSeed: ["processSeed", function(results, callback){
 			var seedUrl = results.getSeedUrl
 			// console.log(seedUrl)
 

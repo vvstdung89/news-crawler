@@ -11,6 +11,8 @@ var SiteConfig   = new Schema({
 	use_diffbot: Boolean,
 	isEnable: {type: Boolean, index: true, default: false}, 
 	article_processor: Schema.Types.Mixed,
+
+	processSeedTime: {type: Date, unique: true}
 });
 
 SiteConfig.set('autoIndex', true);

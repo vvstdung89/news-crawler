@@ -9,18 +9,18 @@ var UrlList   = new Schema({
 	createAt: Date,
 	lastUpdateAt: Date,
 
-	isEnable: {type: Boolean, index: true}, 
-
 	processSeed: {
 		processAt: Date,
 		status: String,
 		msg: String,
+		retry: Number
 	},
 	
 	processArticle: {
 		processAt: Date,
 		status: String,
 		msg: String,
+		retry: Number
 	}
 });
 

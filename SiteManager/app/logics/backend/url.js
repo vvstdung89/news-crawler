@@ -10,107 +10,154 @@ _60min = 60*60*1000
 
 module.exports = {
 	getSeedURLToCrawl: function(req, res){
-		var domain = req.body.domain || []
+		var priority = req.body.priority 
+		var batch = req.body.batch || 5
 
 		var query = {
-			type: "seed", 
 			isEnable: true,
-			$or: [
-				{
-					"processSeed": {$exists: false}
-				},
-				{
-					"processSeed.status" : "processing",
-					"processSeed.processAt": {$lt: new Date() - _5min}
-				},
-				{
-					"processSeed.status" : "error",
-					"processSeed.processAt": {$lt: new Date() - _15min}
-				},
-				{
-					"processSeed.status" : "finish",
-					"processSeed.processAt": {$lt: new Date() - _5min},
-					"priority" : "high"
-				},
-				{
-					"processSeed.status" : "finish",
-					"processSeed.processAt": {$lt: new Date() - _30min},
-					"priority" : "medium"
-				},
-				{
-					"processSeed.status" : "finish",
-					"processSeed.processAt": {$lt: new Date() - _60min},
-					"priority" : "low"
-				}
-			]
-		}
-		
-		var update = {
-			"processSeed.status" : "processing",
-			"processSeed.processAt": new Date()
+			processSeedTime: {$lt: new Date() - _5min}
 		}
 
-		if (domain.length>0){
-			query.domain = {
-				$in: domain
-			}
+		if (priority){
+			query.priority = priority
 		}
 
+		async.auto({
+			getEnableSite: function(callback){
+				SiteDB.findOneAndUpdate(query, {
+					processSeedTime: new Date()
+				},{
+					processSeedTime: 1
+				}).exec(callback)
+			},
+			getBatchUrl: ["getEnableSite", function(results, callback){
+				var site = results.getEnableSite
+				if (!site) return callback(null, [])
 
-		UrlDB.findOneAndUpdate(query, update, {sort: {"processSeed.processAt": 1}}).lean().exec(function(err, obj){			
-			if (obj){
-				var domain = obj.domain
-				SiteDB.findOne({domain:domain}, function(err, data){
-					obj.site = data
-					replyMessage(err, obj, res)
-				})
-			}  else replyMessage(err, obj, res)
-			
+				var waitTime = _60min
+				if (site.priority=="high") waitTime = _15min
+				if (site.priority=="medium") waitTime = _30min
+				if (site.priority=="low") waitTime = _60min
+
+				var _arr = []
+				for (var i = 0; i < batch; i++) _arr.push(i)
+				var urls = []
+
+				async.eachSeries(_arr, function(_, callback){
+					UrlDB.findOneAndUpdate({
+						domain: site.domain,
+						type: "seed",
+						$or: [
+							{
+								"processSeed": {$exists: false}
+							},
+							{
+								"processSeed.status" : "processing",
+								"processSeed.processAt": {$lt: new Date() - _5min}
+							},
+							{
+								"processSeed.status" : "error",
+								"processSeed.processAt": {$lt: new Date() - _15min}
+							},
+							{
+								"processSeed.status" : "finish",
+								"processSeed.processAt": {$lt: new Date() - waitTime}
+							},
+						]
+					}, {
+						"processSeed.status" : "processing",
+						"processSeed.processAt": new Date()
+					}, {
+						sort: {"processSeed.processAt": 1}
+					}).lean().exec(function(err, obj){			
+						if (obj){
+							obj.site = site
+							urls.push(obj)
+						}
+						callback()
+					})
+				}, function(){
+					callback(null, urls)
+				})	
+			}]
+		}, function(err, results){
+			if (err)
+				return replyMessage(err, [], res)
+			replyMessage(err, results.getBatchUrl, res)
 		})
+
 	},
 
 	getArticleURLToCrawl: function(req, res){
-		var domain = req.body.domain || []
+		var priority = req.body.priority 
+		var batch = req.body.batch || 5
 
 		var query = {
-			type: "article",
 			isEnable: true,
 			$or: [
-				{
-					"processArticle": {$exists: false}
-				},
-				{
-					"processArticle.status" : "processing",
-					"processArticle.processAt": {$lt: new Date() - _5min}
-				},
-				{
-					"processArticle.status" : "error",
-					"processArticle.processAt": {$lt: new Date() - _15min}
-				}
+				{ processArticleTime: {$lt: new Date() - _5min} },
+				{ processArticleTime: {$exists: false } }
 			]
-		}
-		
-		var update = {
-			"processArticle.status" : "processing",
-			"processArticle.processAt": new Date()
+			
 		}
 
-		if (domain.length>0){
-			query.domain = {
-				$in: domain
-			}
+		if (priority){
+			query.priority = priority
 		}
 
-
-		
-		UrlDB.findOneAndUpdate(query, update,{sort: {"createAt": 1}}).lean().exec(function(err, obj){			
-			if (obj){
-				var domain = obj.domain
-				SiteDB.findOne({domain:domain}, function(err, data){
-					obj.site = data
-					replyMessage(err, obj, res)
-				})
-			}  else replyMessage(err, obj, res)
+		async.auto({
+			getEnableSite: function(callback){
+				SiteDB.findOneAndUpdate(query, {
+					processArticleTime: new Date()
+				}, {
+					processArticleTime: 1
+				}).exec(callback)
+			},
+			getBatchUrl: ["getEnableSite", function(results, callback){
+				var site = results.getEnableSite
+				if (!site) return callback(null, [])
+				console.log(site)
+				var _arr = []
+				for (var i = 0; i < batch; i++) _arr.push(i)
+				var urls = []
+				async.eachSeries(_arr, function(_, callback){
+					UrlDB.findOneAndUpdate({
+						domain: site.domain,
+						type: "article",
+						$or: [
+							{
+								"processArticle": {$exists: false}
+							},
+							{
+								"processArticle.status" : "processing",
+								"processArticle.processAt": {$lt: new Date() - _5min}
+							},
+							{
+								"processArticle.status" : "error",
+								"processArticle.processAt": {$lt: new Date() - _15min}
+							},
+						]
+					}, {
+						"processArticle.status" : "processing",
+						"processArticle.processAt": new Date()
+					}, {
+						sort: {"createAt": 1}
+					}).lean().exec(function(err, obj){	
+						console.log(obj)		
+						if (obj){
+							obj.site = site
+							urls.push(obj)
+						}
+						callback()
+					})
+				}, function(){
+					callback(null, urls)
+				})	
+			}]
+		}, function(err, results){
+			if (err)
+				return replyMessage(err, [], res)
+			replyMessage(err, resutls.getBatchUrl, res)
 		})
 	}
 }
