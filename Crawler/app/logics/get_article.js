@@ -42,9 +42,6 @@ function start(){
 	async.auto({
 		getArticleUrl: function(callback){
 			var query  = {}
-			if (isLimitDomain){
-				query.domain = limitDomain
-			}
 
 			URLService.getArticleURLToCrawl(query, function(err, result){
 				if (err) {
@@ -53,17 +50,34 @@ function start(){
 				}
 
 				var replyObj = JSON.parse(result)
-				if (typeof replyObj.data == "undefined") {
+				if (typeof replyObj.data == "undefined" || replyObj.data.length==0) {
 					return callback(ERROR.NO_VALID_ARTICLE_URL)
 				}
 
-				
+
 				callback(null, replyObj.data)
 			})
 		},
-		downloadArticle: ["getArticleUrl", function(results, callback){
-			var articleURL = results.getArticleUrl
-			// __Logger.info("Process " + articleURL.url)
+		processArticle: ["getArticleUrl", function(results, processCallback){
+			var articleUrls = results.getArticleUrl
+			async.each(articleUrls, function(articleUrl, callback){
+				// console.log("processArticle " + articleUrl.url)
+				processArticle(articleUrl, callback)
+			}, function(){
+				processCallback()
+			})
+		}],
+		
+	},function(err, results){
+		setTimeout(start,1000)
+		if (err) console.log(err)
+	})
+}
+
+
+function processArticle(articleURL, processCallback){
+	async.auto({
+		downloadArticle: function(callback){
 
 			var option = {
 				url: articleURL.url,
@@ -82,23 +96,22 @@ function start(){
 				}
 			})
 			
-		}],
+		},
 		getURL: ["downloadArticle", function(results, callback){
 			var htmlContent = results.downloadArticle
 
-			// console.log(results.getArticleUrl)
-			var site = results.getArticleUrl.site
+			var site = articleURL.site
 			var article_processor = site.article_processor
 
 			//parse article url
 			var article_pattern_match = site.article_pattern.pattern_match
 			var articleURLs = parser.parseURL(htmlContent, [article_pattern_match], site.root_url)
+
 			articleURLs = articleURLs.map(function(x){
 				return {
 					"type": "article",
 					"url": x.replace("https","http"),
-					"domain": results.getArticleUrl.domain,
-					isEnable: site.isEnable
+					"domain": articleURL.domain
 				}
 			})
 
@@ -111,14 +124,11 @@ function start(){
 				if (!articleContent[key]) delete articleContent[key]
 			}
 			articleContent.domain = site.domain
-			articleContent.url = results.getArticleUrl.url
+			articleContent.url = articleURL.url
 
 			if (articleContent.publish_date && (new Date() - articleContent.publish_date < _1week)){
 				MsgQueue.send("URLUpdate", JSON.stringify(articleURLs))
 			} 
-			// else {
-			// 	console.log(articleContent.publish_date)
-			// }
 
 			//check require field
 			var satisfyRequireField = true
@@ -140,42 +150,36 @@ function start(){
 			MsgQueue.send("ArticleUpdate", JSON.stringify(articleContent))
 			return callback(null)
 		}],
-	},function(err, results){
-		//rerun after 1s
-		setTimeout(start,1000)
-
-		if (err) console.log(err)
-		var articleURL = results.getArticleUrl
-
-		if (articleURL && articleURL.url){
-			var data =  {
-				url: articleURL.url,
-				"processArticle.status" : "finish",
-				"processArticle.processAt" : new Date(),
-				"processArticle.msg": ""
-			}
-
-			if (err){
-				if (err.message == "DOWNLOAD_FAIL") {
-					data["processArticle.status"] = "error"
-					data["processArticle.msg"] = "DOWNLOAD_FAIL"
-					data["processArticle.retry"] = { $inc: 1 }
-				}
-
-				if (err.message == "PARSE_FAIL") {
-					data["processArticle.status"] = "invalid"
-					data["processArticle.msg"] = "PARSE_FAIL"
-				}
-
-			} else {
-				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_success,type=article,domain=' + articleURL.domain + ' value=1 \`date +%s\`000000000"'
-				exec(cmd, function(){})
-			}
-			MsgQueue.send("URLUpdate", JSON.stringify(data))
-		}
+	}, function(err, results){
 		
+		var data =  {
+			url: articleURL.url,
+			"processArticle.status" : "finish",
+			"processArticle.processAt" : new Date(),
+			"processArticle.msg": ""
+		}
+
+		if (err){
+			if (err.message == "DOWNLOAD_FAIL") {
+				data["processArticle.status"] = "error"
+				data["processArticle.msg"] = "DOWNLOAD_FAIL"
+				data["processArticle.retry"] = { $inc: 1 }
+			}
+
+			if (err.message == "PARSE_FAIL") {
+				data["processArticle.status"] = "invalid"
+				data["processArticle.msg"] = "PARSE_FAIL"
+			}
+
+		} else {
+			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_success,type=article,domain=' + articleURL.domain + ' value=1 \`date +%s\`000000000"'
+			exec(cmd, function(){})
+		}
+
+		return processCallback()
 	})
 }
+
 
 
 

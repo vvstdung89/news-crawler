@@ -15,7 +15,10 @@ module.exports = {
 
 		var query = {
 			isEnable: true,
-			processSeedTime: {$lt: new Date() - _5min}
+			$or: [
+				{ processSeedTime: {$lt: new Date() - _5min} },
+				{ processSeedTime: {$exists: false } }
+			]
 		}
 
 		if (priority){
@@ -24,6 +27,7 @@ module.exports = {
 
 		async.auto({
 			getEnableSite: function(callback){
+				// console.log(JSON.stringify(query))
 				SiteDB.findOneAndUpdate(query, {
 					processSeedTime: new Date()
 				},{
@@ -32,6 +36,7 @@ module.exports = {
 			},
 			getBatchUrl: ["getEnableSite", function(results, callback){
 				var site = results.getEnableSite
+
 				if (!site) return callback(null, [])
 
 				var waitTime = _60min
@@ -115,6 +120,8 @@ module.exports = {
 			},
 			getBatchUrl: ["getEnableSite", function(results, callback){
 				var site = results.getEnableSite
+				// console.log(site)
+
 				if (!site) return callback(null, [])
 				console.log(site)
 				var _arr = []
@@ -143,7 +150,7 @@ module.exports = {
 					}, {
 						sort: {"createAt": 1}
 					}).lean().exec(function(err, obj){	
-						console.log(obj)		
+						// console.log(obj)		
 						if (obj){
 							obj.site = site
 							urls.push(obj)
@@ -157,7 +164,7 @@ module.exports = {
 		}, function(err, results){
 			if (err)
 				return replyMessage(err, [], res)
-			replyMessage(err, resutls.getBatchUrl, res)
+			replyMessage(err, results.getBatchUrl, res)
 		})
 	}
 }
@@ -182,7 +189,7 @@ function replyMessage(err, data, res){
 
 MsgQueue.createWORKER("URLUpdate",5, function(worker, message){
 	worker.ack()
-
+	// console.log("receive " + message.toString())
 	var data = JSON.parse(message.toString().trim())
 	if (data instanceof Array){
 		async.eachSeries(data, function(url, callback){

@@ -35,16 +35,15 @@ var ERROR = {
 	DOWNLOAD_FAIL: new Error("DOWNLOAD_FAIL")
 }
 
+
+
 start()
 //process
 function start(){
 	async.auto({
 		getSeedUrl: function(callback){
 			var query  = {}
-			if (isLimitDomain){
-				query.domain = limitDomain
-			}
-
+			
 			URLService.getSeedURLToCrawl(query, function(err, result){
 				if (err) {
 					console.log(err)
@@ -52,21 +51,33 @@ function start(){
 				}
 
 				var replyObj = JSON.parse(result)
-				if (typeof replyObj.data == "undefined") {
+				if (typeof replyObj.data == "undefined" || replyObj.data.length==0) {
 					return callback(ERROR.NO_VALID_SEED_URL)
 				}
-
+				
 				callback(null, replyObj.data)
 			})
 		},
-		processSeed: ["getSeedUrl", function(results, callback){
+		processSeed: ["getSeedUrl", function(results, processCallback){
 			var seedUrls = results.getSeedUrl
-			
+			async.each(seedUrls, function(seedUrl, callback){
+				// console.log("processSeed " + seedUrl.url)
+				processSeed(seedUrl, callback)
+			}, function(){
+				processCallback()
+			})
 		}],
-		downloadSeed: ["processSeed", function(results, callback){
-			var seedUrl = results.getSeedUrl
-			// console.log(seedUrl)
+		
+	},function(err, results){
+		setTimeout(start, 1000)
+		if (err) console.log(err)
+		
+	})
+}
 
+function processSeed(seedUrl, processCallback){
+	async.auto({
+		downloadSeed: function(callback){
 			var option = {
 				url: seedUrl.url,
 				method: "GET",
@@ -84,56 +95,54 @@ function start(){
 				}
 					
 			})
-		}],
+		},
 		getURL: ["downloadSeed", function(results, callback){
 			var htmlContent = results.downloadSeed
-			var seedUrl = results.getSeedUrl
 			var site = seedUrl.site
 			var article_processor = site.article_processor
-
 			var article_pattern_match = site.article_pattern.pattern_match
-
 			var articleURL = parser.parseURL(htmlContent, [article_pattern_match], site.root_url)
 
-			console.log(articleURL.length)
+			if (articleURL.length==0){
+				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
+				exec(cmd, function(){})
+			}
+
 			articleURL = articleURL.map(function(x){
 				return {
 					"type": "article",
 					"url": x.replace("https","http"),
-					"domain": seedUrl.domain,
-					isEnable: site.isEnable
+					"domain": seedUrl.domain
 				}
 			})
 			MsgQueue.send("URLUpdate", JSON.stringify(articleURL))
-			return callback(null)
-		}]
-	},function(err, results){
-		
-		setTimeout(start, 1000)
 
-		if (err) console.log(err)
-		
-		var seedUrl = results.getSeedUrl
-		if (seedUrl && seedUrl.url){
-			var data =  {
-				url: seedUrl.url,
-				"processSeed.status" : "finish",
-				"processSeed.processAt" : new Date()
-			}
-			if (err){
-				if (err.message == "DOWNLOAD_FAIL") {
-					data["processSeed.status"] = "error"
-					data["msg"] = "Cannot download url"
-				}
-			} else {
-				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_succes,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
-				exec(cmd, function(){})
-			}
-			return MsgQueue.send("URLUpdate", JSON.stringify(data))
+			return callback(null, articleURL)
+		}]
+	}, function(err, results){
+		var articleURLs = results.getURL
+
+		var data =  {
+			"url": seedUrl.url,
+			"processSeed.status" : "finish",
+			"processSeed.processAt" : new Date()
 		}
+
+		if (err){
+			data["processSeed.status"] = "error"
+			data["msg"] = "Cannot download url"
+		} if (!articleURLs || articleURLs.length==0){
+			data["processSeed.status"] = "error"
+			data["msg"] = "Parser Error"
+		} else {
+			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_succes,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
+			exec(cmd, function(){})
+		}
+		MsgQueue.send("URLUpdate", JSON.stringify(data))
+
+		return processCallback()
 	})
 }
-
 
 
 
