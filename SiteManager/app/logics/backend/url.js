@@ -14,11 +14,7 @@ module.exports = {
 		var batch = req.body.batch || 5
 
 		var query = {
-			isEnable: true,
-			$or: [
-				{ processSeedTime: {$lt: new Date() - _5min} },
-				{ processSeedTime: {$exists: false } }
-			]
+			isEnable: true
 		}
 
 		if (priority){
@@ -31,15 +27,17 @@ module.exports = {
 				SiteDB.findOneAndUpdate(query, {
 					processSeedTime: new Date()
 				},{
-					processSeedTime: 1
+					sort: {processSeedTime: 1}
 				}).exec(callback)
 			},
 			getBatchUrl: ["getEnableSite", function(results, callback){
 				var site = results.getEnableSite
-
+				
 				if (!site) return callback(null, [])
+				console.log("site " + site.domain)
 
 				var waitTime = _60min
+
 				if (site.priority=="high") waitTime = _15min
 				if (site.priority=="medium") waitTime = _30min
 				if (site.priority=="low") waitTime = _60min
@@ -98,12 +96,7 @@ module.exports = {
 		var batch = req.body.batch || 5
 
 		var query = {
-			isEnable: true,
-			$or: [
-				{ processArticleTime: {$lt: new Date() - _5min} },
-				{ processArticleTime: {$exists: false } }
-			]
-			
+			isEnable: true
 		}
 
 		if (priority){
@@ -115,15 +108,15 @@ module.exports = {
 				SiteDB.findOneAndUpdate(query, {
 					processArticleTime: new Date()
 				}, {
-					processArticleTime: 1
+					sort: {processArticleTime: 1}
 				}).exec(callback)
 			},
 			getBatchUrl: ["getEnableSite", function(results, callback){
 				var site = results.getEnableSite
-				// console.log(site)
+				console.log("article site: " + site.domain)
 
 				if (!site) return callback(null, [])
-				console.log(site)
+				
 				var _arr = []
 				for (var i = 0; i < batch; i++) _arr.push(i)
 				var urls = []

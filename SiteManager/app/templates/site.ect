@@ -159,8 +159,11 @@
 			<tr>
 				<th>Name</th>
 				<th>Root URL</th>
-				<th>Seed URLs</th>
-				<th>Article URLs</th>
+				<th>Today Add</th>
+				<th>Seed Error</th>
+				<th>Article Success</th>
+				<th>Article Get Error</th>
+				<th>Article Parse Error</th>
 				<th>Action</th>
 			</tr>
 		</thead>
@@ -169,8 +172,11 @@
 				<tr>
 					<td><%= site.name %></td>
 					<td><%= site.root_url %></td>
-					<td>0</td>
-					<td>0</td>
+					<td><%= site.todayArticle %></td>
+					<td><%= site.errorSeed %></td>
+					<td><%= site.successArticle %></td>
+					<td><%= site.articleGetError %></td>
+					<td><%= site.articleParseError %></td>
 					<td>
 						<div class="dropdown">
 							<% if site.isEnable == true : %>

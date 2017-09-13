@@ -20,8 +20,8 @@ if (typeof program.limit_domain != "undefined"){
 	limitDomain = program.limit_domain.split(",").map(function(x) {
 		return x.trim()
 	})
-
 }
+
 var isLimitDomain = (limitDomain.length > 0)
 
 if (isLimitDomain)
@@ -42,8 +42,9 @@ start()
 function start(){
 	async.auto({
 		getSeedUrl: function(callback){
-			var query  = {}
-			
+			var query  = {
+				batch: 10
+			}
 			URLService.getSeedURLToCrawl(query, function(err, result){
 				if (err) {
 					console.log(err)
@@ -54,7 +55,6 @@ function start(){
 				if (typeof replyObj.data == "undefined" || replyObj.data.length==0) {
 					return callback(ERROR.NO_VALID_SEED_URL)
 				}
-				
 				callback(null, replyObj.data)
 			})
 		},
@@ -71,7 +71,6 @@ function start(){
 	},function(err, results){
 		setTimeout(start, 1000)
 		if (err) console.log(err)
-		
 	})
 }
 
@@ -89,7 +88,7 @@ function processSeed(seedUrl, processCallback){
 					return callback(null, body)			
 				}
 				else {
-					var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_error,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
+					var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_error,type=seed,domain=' + seedUrl.domain + ' value=1 ' + (+new Date()) + '000000"'
 					exec(cmd, function(){})
 					return callback(ERROR.DOWNLOAD_FAIL)
 				}
@@ -104,7 +103,7 @@ function processSeed(seedUrl, processCallback){
 			var articleURL = parser.parseURL(htmlContent, [article_pattern_match], site.root_url)
 
 			if (articleURL.length==0){
-				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
+				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=seed,domain=' + seedUrl.domain + ' value=1 ' + (+new Date()) + '000000"'
 				exec(cmd, function(){})
 			}
 
@@ -135,7 +134,8 @@ function processSeed(seedUrl, processCallback){
 			data["processSeed.status"] = "error"
 			data["msg"] = "Parser Error"
 		} else {
-			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_succes,type=seed,domain=' + seedUrl.domain + ' value=1 \`date +%s\`000000000"'
+			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_success,type=seed,domain=' + seedUrl.domain + ' value=1 ' + (+new Date()) + '000000"'
+			// console.log("seed success ... ", cmd)
 			exec(cmd, function(){})
 		}
 		MsgQueue.send("URLUpdate", JSON.stringify(data))

@@ -12,7 +12,14 @@ var SiteConfig   = new Schema({
 	isEnable: {type: Boolean, index: true, default: false}, 
 	article_processor: Schema.Types.Mixed,
 
-	processSeedTime: {type: Date, unique: true}
+	processSeedTime: {type: Date, unique: true},
+	processArticleTime: {type: Date, unique: true},
+
+	todayArticle: {type: Number, index: true, default: 0, init: true},
+	errorSeed: {type: Number, index: true, default: 0, init: true},
+	successArticle: {type: Number, index: true, default: 0, init: true},
+	articleGetError: {type: Number, index: true, default: 0, init: true},
+	articleParseError: {type: Number, index: true, default: 0, init: true}
 });
 
 SiteConfig.set('autoIndex', true);

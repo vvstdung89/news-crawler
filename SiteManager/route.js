@@ -1,4 +1,5 @@
 require("./app/logics/backend/article")
+require("./app/logics/monitor/stat")
 
 exports = module.exports = function (app, router){
 

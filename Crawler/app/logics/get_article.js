@@ -41,7 +41,9 @@ start()
 function start(){
 	async.auto({
 		getArticleUrl: function(callback){
-			var query  = {}
+			var query  = {
+				batch: 10
+			}
 
 			URLService.getArticleURLToCrawl(query, function(err, result){
 				if (err) {
@@ -90,7 +92,7 @@ function processArticle(articleURL, processCallback){
 					return callback(null, body)			
 				}
 				else {
-					var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_error,type=article,domain=' + articleURL.domain + ' value=1 \`date +%s\`000000000"'
+					var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_error,type=article,domain=' + articleURL.domain + ' value=1 ' + (+new Date()) + '000000"'
 					exec(cmd, function(){})
 					return callback(ERROR.DOWNLOAD_FAIL)
 				}
@@ -141,7 +143,7 @@ function processArticle(articleURL, processCallback){
 			}
 
 			if (!satisfyRequireField) {
-				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=article,domain=' + site.domain + ' value=1 \`date +%s\`000000000"'
+				var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "parse_error,type=article,domain=' + site.domain + ' value=1 ' + (+new Date()) + '000000"'
 					exec(cmd, function(){})
 				
 				return callback(ERROR.PARSE_FAIL)
@@ -163,7 +165,7 @@ function processArticle(articleURL, processCallback){
 			if (err.message == "DOWNLOAD_FAIL") {
 				data["processArticle.status"] = "error"
 				data["processArticle.msg"] = "DOWNLOAD_FAIL"
-				data["processArticle.retry"] = { $inc: 1 }
+				data["$inc"] = { "processArticle.retry" : 1 }
 			}
 
 			if (err.message == "PARSE_FAIL") {
@@ -172,10 +174,12 @@ function processArticle(articleURL, processCallback){
 			}
 
 		} else {
-			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_success,type=article,domain=' + articleURL.domain + ' value=1 \`date +%s\`000000000"'
+			var cmd = 'curl -s "http://monitor.boomerang.net.vn:8086/write?db=mydb" --data-binary "get_success,type=article,domain=' + articleURL.domain + ' value=1 ' + (+new Date()) + '000000"'
 			exec(cmd, function(){})
 		}
 
+		console.log(data)
+		MsgQueue.send("URLUpdate", JSON.stringify(data))
 		return processCallback()
 	})
 }

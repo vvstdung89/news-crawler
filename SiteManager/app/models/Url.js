@@ -4,29 +4,38 @@ var Schema       = mongoose.Schema;
 var UrlList   = new Schema({
 	domain: {type: String, index: true},
 	url: {type: String, unique: true},
-	type: String, //seed, article	
-	priority: String,
-	createAt: Date,
-	lastUpdateAt: Date,
+	type: {type: String, index: true}, //seed, article	
+	priority: {type: String, index: true},
+	createAt: {type: Date, index: true},
+
+	lastUpdateAt: {type: Date, index: true},
 
 	processSeed: {
-		processAt: Date,
-		status: String,
+		processAt: {type: Date, index: true},
+		status: {type: String, index: true},
 		msg: String,
 		retry: Number
 	},
 	
 	processArticle: {
-		processAt: Date,
-		status: String,
+		processAt: {type: Date, index: true},
+		status: {type: String, index: true},
 		msg: String,
 		retry: Number
 	}
 });
 
 UrlList.set('autoIndex', true);
-UrlList.index({domain: -1, type: 1, createAt: 1})
-UrlList.index({type: -1, createAt: 1})
+
+//indexing get todayArticleStat
+UrlList.index({createAt: 1, type: 1})
+UrlList.index({createAt: 1, type: 1, domain: 1})
+
+//indexing get articleErrorStat
+UrlList.index({"processArticle.processAt": 1, type: 1, "processArticle.status": 1})
+UrlList.index({"processArticle.processAt": 1, type: 1, "processArticle.status": 1, "domain": 1})
+
+
 UrlList.index({domain: -1, type: 1, priority: 1, processSeed: -1, createAt: 1})
 UrlList.index({domain: -1, type: 1, processArticle: -1, createAt: 1})
 
