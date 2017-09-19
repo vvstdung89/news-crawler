@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Bootstrap Example</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+
+
+		function testPattern(){
+			var submitForm = document.getElementById("article_pattern")
+			var pattern = submitForm.querySelector("input[name='article_pattern']").value
+			var root_url = submitForm.querySelector("input[name='root_url']").value
+			var test_url = submitForm.querySelector("input[name='test_url']").value
+			
+			var url = "/tester/article_pattern";
+			var params = "pattern="+encodeURI(pattern) + "&root_url="+encodeURI(root_url)+ "&test_url="+encodeURI(test_url)
+
+			xhrPostRequest(url, params, function(err, data){
+				if (err) return alert(err)
+				document.getElementById("result_text").innerText = data
+			})
+		}
+
+
+		function savePattern(){
+			var submitForm = document.getElementById("article_pattern")
+			var pattern = submitForm.querySelector("input[name='article_pattern']").value
+			
+			
+			var url = "edit_seed/update";
+			var params = "pattern="+encodeURI(pattern) 
+
+			xhrPostRequest(url, params, function(err, data){
+				if (err) return alert(err)
+				document.getElementById("result_text").innerText = data
+			})
+		}
+
+		function xhrPostRequest(url, data, callback){
+			var http = new XMLHttpRequest();
+			http.open("POST", url, true);
+			http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			http.onreadystatechange = function() {//Call a function when the state changes.
+			    if(http.readyState == 4 && http.status == 200) {
+			        callback(null, http.responseText)
+			    } else if (http.readyState == 4) {
+			    	callback("Send error")
+			    }
+			}
+			http.send(data);
+		}
+
+	</script>
+
+
+</head>
+<body>
+
+<div class="container">
+	<h2>Edit article pattern and seed url for <%= @domain %></h2>
+	<form id="article_pattern" class="form-horizontal">
+		<div class="form-group">
+			<label class="control-label col-sm-2" for="pattern"> Test URL:</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" name="test_url" value="<%= @root_url %>">
+				<input type="hidden" class="form-control" name="root_url" value="<%= @root_url %>">
+				<input type="hidden" class="form-control" name="siteID" value="<%= @siteID %>">
+			</div>
+			<label class="control-label col-sm-2" for="pattern"> Article Pattern:</label>
+			<div class="col-sm-7">
+				<input type="text" class="form-control" name="article_pattern" value="<%= @article_pattern %>">
+			</div>
+			<div class="col-sm-3">
+				<button type="button" class="btn btn-primary" onclick="testPattern()">Test </button>
+				<button type="button" class="btn btn-primary" onclick="savePattern()">Save </button>
+			</div>
+		</div>
+	</form>
+	<p id="result_text" >  </p>
+
+	<table class="table">
+		<thead>
+			<tr>
+				<th>URL</th>
+				<th>Status</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<% for url in @urlList: %>
+				<tr>
+					<td><%= url.url %></td>
+					<td><%= url.status %></td>
+					<td>-</td>
+				</tr>
+			<% end %>
+		</tbody>
+	</table>
+
+</div>
+
+</body>
+</html>

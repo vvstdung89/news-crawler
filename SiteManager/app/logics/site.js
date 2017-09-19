@@ -16,7 +16,7 @@ module.exports = {
 
 function index(req, res){
 	var siteList = []
-	SiteDB.list({}, 0, 100, {}, function(err, data){
+	SiteDB.list({}, 0, 1000, {}, function(err, data){
 		if (err) return res.end("Database access error")
 		res.render("site", {siteList:data})
 	})

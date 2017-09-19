@@ -8,6 +8,7 @@
     "async": "^2.1.2",
     "body-parser": "^1.15.2",
     "busboy": "^0.2.13",
+    "cheerio": "^1.0.0-rc.2",
     "cluster": "^0.7.7",
     "colors": "^1.1.2",
     "compression": "^1.6.2",

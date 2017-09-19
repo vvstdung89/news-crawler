@@ -1,3 +1,4 @@
+require("./Config")
 var Logger = require("./app/logics/libs/Logger")
 
 var compression = require('compression')
