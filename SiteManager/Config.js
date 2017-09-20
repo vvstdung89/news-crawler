@@ -8,7 +8,7 @@ var Config = {
 	PORT: PORT,
 	NODE_ENV: NODE_ENV,
 	REDIS: "",
-	MONGO: "mongodb://172.245.13.202:27017/News",
+	MONGO: "mongodb://172.245.13.202:58018/News",
 	RABBITMQ: "amqp://admin:admin@172.245.13.202:15672"
 }
 
