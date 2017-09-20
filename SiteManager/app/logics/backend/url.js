@@ -113,10 +113,11 @@ module.exports = {
 			},
 			getBatchUrl: ["getEnableSite", function(results, callback){
 				var site = results.getEnableSite
-				console.log("article site: " + site.domain)
+				
 
 				if (!site) return callback(null, [])
-				
+				console.log("article site: " + site.domain)
+			
 				var _arr = []
 				for (var i = 0; i < batch; i++) _arr.push(i)
 				var urls = []
