@@ -18,6 +18,7 @@ var ArticleDB   = new Schema({
 });
 
 ArticleDB.set('autoIndex', true);
+ArticleDB.index({createAt: -1, domain: -1});
 
 var DBModel = mongoose.model('article', ArticleDB);
 var DBAccessAPI = require("./Base")(DBModel)

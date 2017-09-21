@@ -117,7 +117,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="fluid-container">
 	<h2>Sites</h2>
 	<p>Show all site information and status</p>	
 	<button type="button" class="btn btn-info btn-md" data-keyboard="true" data-toggle="modal" data-target="#addSiteModal">Add Site</button>	
@@ -164,6 +164,8 @@
 				<th>Article Success</th>
 				<th>Article Get Error</th>
 				<th>Article Parse Error</th>
+				<th>SystemDelay (min/max/avg)</th>
+				<th>InsertDelay (min/max/avg)</th>
 				<th>Action</th>
 			</tr>
 		</thead>
@@ -177,6 +179,8 @@
 					<td><%= site.successArticle %></td>
 					<td><%= site.articleGetError %></td>
 					<td><%= site.articleParseError %></td>
+					<td> <%= site.systemDelayMin %> - <%= site.systemDelayMax %> - <%= site.systemDelayAvg %> </td>
+					<td> <%= site.insertDelayMin %> - <%= site.insertDelayMax %> - <%= site.insertDelayAvg %> </td>
 					<td>
 						<div class="dropdown">
 							<% if site.isEnable == true : %>

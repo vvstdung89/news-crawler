@@ -19,7 +19,17 @@ var SiteConfig   = new Schema({
 	errorSeed: {type: Number, index: true, default: 0, init: true},
 	successArticle: {type: Number, index: true, default: 0, init: true},
 	articleGetError: {type: Number, index: true, default: 0, init: true},
-	articleParseError: {type: Number, index: true, default: 0, init: true}
+	articleParseError: {type: Number, index: true, default: 0, init: true},
+
+
+	systemDelayMin: {type: Number, index: true, default: 0, init: true},
+	systemDelayMax: {type: Number, index: true, default: 0, init: true},
+	systemDelayAvg: {type: Number, index: true, default: 0, init: true},
+
+	insertDelayMin: {type: Number, index: true, default: 0, init: true},
+	insertDelayMax: {type: Number, index: true, default: 0, init: true},
+	insertDelayAvg: {type: Number, index: true, default: 0, init: true},
+
 });
 
 SiteConfig.set('autoIndex', true);
